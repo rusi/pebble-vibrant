@@ -4,13 +4,13 @@
         "pebble-clay": "^1.0.3"
     },
     "keywords": [],
-    "name": "vibewatch",
+    "name": "vibrant",
     "pebble": {
         "capabilities": [
             "configurable",
             "health"
         ],
-        "displayName": "VibeWatch",
+        "displayName": "Vibrant",
         "enableMultiJS": true,
         "messageKeys": [
             "TickVibrate",

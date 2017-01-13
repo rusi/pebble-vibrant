@@ -15,7 +15,7 @@ static char s_num_buffer[4], s_day_buffer[6];
 static char s_current_steps_buffer[16];
 static int s_step_count = 0, s_step_goal = 0, s_step_average = 0;
 
-static bool second_ticks = 0, tick_vibrate = 0;
+static bool second_ticks = 1, tick_vibrate = 1;
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorBlack);
@@ -83,7 +83,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(s_window));
 
-  if (tick_time->tm_sec == 0) {
+  if (tick_vibrate && tick_time->tm_sec == 0) {
 //     if (tick_time->tm_min % 30 == 0) {
 //       vibe_long_long();
 //     } else
@@ -226,10 +226,10 @@ static void msg_inbox_received_handler(DictionaryIterator *iter, void *context) 
     second_ticks = second_tick_t->value->int32 == 1;
   }
 
-//   Tuple *tick_vibrate_t = dict_find(iter, MESSAGE_KEY_TickVibrate);
-//   if (tick_vibrate_t) {
-//     tick_vibrate = tick_vibrate_t->value->int32 == 1;
-//   }
+  Tuple *tick_vibrate_t = dict_find(iter, MESSAGE_KEY_TickVibrate);
+  if (tick_vibrate_t) {
+    tick_vibrate = tick_vibrate_t->value->int32 == 1;
+  }
   
   if (second_ticks) {
     tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);  
