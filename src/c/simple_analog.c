@@ -34,6 +34,10 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
+  
+//   t->tm_sec = 23;
+//   t->tm_min = 12;
+//   t->tm_hour = 10;
 
   if (second_ticks) {
   // seconds hand
@@ -99,6 +103,7 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 static void get_step_count() {
   s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
+//   s_step_count = 6342;
 }
 
 static void display_step_count() {
