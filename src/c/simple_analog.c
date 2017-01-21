@@ -15,7 +15,39 @@ static char s_num_buffer[4], s_day_buffer[6];
 static char s_current_steps_buffer[16];
 static int s_step_count = 0, s_step_goal = 0, s_step_average = 0;
 
-static bool second_ticks = 1, tick_vibrate = 1;
+// ----------
+// Persistent storage key
+#define SETTINGS_KEY 1
+
+// Define our settings struct
+typedef struct ClaySettings {
+  bool second_ticks;
+  bool tick_vibrate;
+} ClaySettings;
+
+// An instance of the struct
+static ClaySettings settings;
+
+// Initialize the default settings
+static void default_settings() {
+  settings.second_ticks = true;
+  settings.tick_vibrate = false;
+}
+
+// Read settings from persistent storage
+static void load_settings() {
+  default_settings();
+  persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+  
+//  layer_mark_dirty(window_get_root_layer(s_window));
+}
+
+// Save the settings to persistent storage
+static void save_settings() {
+  persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));
+  
+//  layer_mark_dirty(window_get_root_layer(s_window));
+}
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorBlack);
@@ -39,7 +71,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 //   t->tm_min = 12;
 //   t->tm_hour = 10;
 
-  if (second_ticks) {
+  if (settings.second_ticks) {
   // seconds hand
     GPoint center = grect_center_point(&bounds);
   
@@ -87,7 +119,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(s_window));
 
-  if (tick_vibrate && tick_time->tm_sec == 0) {
+  if (settings.tick_vibrate && tick_time->tm_sec == 0) {
 //     if (tick_time->tm_min % 30 == 0) {
 //       vibe_long_long();
 //     } else
@@ -228,15 +260,17 @@ static void msg_inbox_received_handler(DictionaryIterator *iter, void *context) 
   // Read boolean preferences
   Tuple *second_tick_t = dict_find(iter, MESSAGE_KEY_SecondTick);
   if (second_tick_t) {
-    second_ticks = second_tick_t->value->int32 == 1;
+    settings.second_ticks = second_tick_t->value->int32 == 1;
   }
 
   Tuple *tick_vibrate_t = dict_find(iter, MESSAGE_KEY_TickVibrate);
   if (tick_vibrate_t) {
-    tick_vibrate = tick_vibrate_t->value->int32 == 1;
+    settings.tick_vibrate = tick_vibrate_t->value->int32 == 1;
   }
   
-  if (second_ticks) {
+  save_settings();
+  
+  if (settings.second_ticks) {
     tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);  
   } else {
     tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick); 
@@ -244,6 +278,7 @@ static void msg_inbox_received_handler(DictionaryIterator *iter, void *context) 
 }
 
 static void init() {
+  load_settings();
   
   // Open AppMessage connection
   app_message_register_inbox_received(msg_inbox_received_handler);
@@ -273,7 +308,7 @@ static void init() {
     s_tick_paths[i] = gpath_create(&ANALOG_BG_POINTS[i]);
   }
 
-  if (second_ticks) {
+  if (settings.second_ticks) {
     tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);  
   } else {
     tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick); 
